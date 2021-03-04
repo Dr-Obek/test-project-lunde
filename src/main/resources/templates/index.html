@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<div id="app" class="container" style="width: 30%">
+    <h1>Contact us</h1>
+    <form action="#" onsubmit="app.sendDataToDb();return false">
+        <div class="form-group">
+            <label for="requestKind">Kind of Request</label>
+            <select id="requestKind" class="form-control" v-model="selected" name="requestKind">
+                <option v-for="option in selectValues" v-bind:value="option">{{ option }}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="policyNo">Policy Number</label>
+            <input id="policyNo" class="form-control" v-model="policyNo">
+        </div>
+        <div class="form-group">
+            <label for="firstName">Name</label>
+            <input id="firstName" class="form-control" v-model="firstName">
+        </div>
+        <div class="form-group">
+            <label for="lastName">Surname</label>
+            <input id="lastName" class="form-control" v-model="lastName">
+        </div>
+        <div class="form-group">
+            <label for="requestText">Your request</label>
+            <textarea id="requestText" class="form-control" v-model="requestText"></textarea>
+        </div>
+        <div class="form-group">
+            <label v-if="error != null" style="color: red">{{ error }}</label>
+        </div>
+        <div class="form-group">
+            <label v-if="successMessage != null" style="color: green">{{ successMessage }}</label>
+        </div>
+        <button type="submit" class="btn btn-primary">SEND REQUEST</button>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: {
+            policyNo: null,
+            firstName: null,
+            lastName: null,
+            requestText: null,
+            selected: null,
+            selectValues: [],
+            error: null,
+            successMessage: null
+        },
+        methods: {
+            fetchSelect() {
+                fetch("http://localhost:8080/contact/request-kinds")
+                    .then(response => {
+                        if (!response.ok) {
+                            app.error = data.message;
+                        } else {
+                            app.error = null;
+                            response.json()
+                                .then(data => data.forEach(item => app.selectValues.push(item.kindOfRequest)))
+                        }
+                    })
+            },
+            sendDataToDb() {
+                const requestOptions = {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        policyNo: app.policyNo,
+                        firstName: app.firstName,
+                        lastName: app.lastName,
+                        requestText: app.requestText,
+                        kindOfRequest: app.selected
+                    })
+                };
+                fetch("http://localhost:8080/contact", requestOptions)
+                    .then(response => {
+                        if (!response.ok) {
+                            response.json()
+                                .then(data => {
+                                    app.error = data.message;
+                                    app.successMessage = null;
+                                })
+                        } else {
+                            app.error = null;
+                            app.policyNo = null;
+                            app.firstName = null;
+                            app.lastName = null;
+                            app.requestText = null;
+                            app.selected = null;
+                            app.successMessage = "Successfully saved!"
+                        }
+                    })
+            }
+        },
+        beforeMount() {
+            this.fetchSelect()
+        }
+    });
+</script>
+</body>
+</html>
